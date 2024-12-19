@@ -1,3 +1,5 @@
+# Dummy data - DO NOT USE IN PROD
+
 from flask import Flask, render_template, request, redirect, url_for, flash
 from prometheus_client import start_http_server, Counter, generate_latest, CONTENT_TYPE_LATEST
 import random
@@ -23,6 +25,7 @@ successful_logins_total = Counter('successful_logins_total', 'Total number of su
 risky_logins_total = Counter('risky_logins_total', 'Total number of risky logins')
 failed_logins_total = Counter('failed_logins_total', 'Total number of failed logins')
 
+# Dummy data - DO NOT USE IN PROD
 USER_DATA = {"username": "admin", "password": "password123"}
 
 def adapt_datetime(dt):
