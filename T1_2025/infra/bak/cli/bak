@@ -11,7 +11,7 @@ def cli():
     instance_parser = subparsers.add_parser("instance")
     instance_parser.add_argument("action", choices=["register", "update", "remove"])
     instance_parser.add_argument("--hostname", type=str)
-    instance_parser.add_argument("--server", type=str)
+    instance_parser.add_argument("--controller", type=str)
     instance_parser.add_argument("--tool", type=str)
     instance_parser.add_argument("--freq", type=str)
     instance_parser.add_argument("--copies", type=str)
@@ -20,10 +20,10 @@ def cli():
 
     if args.command == "instance":
         if args.action == "register":
-            add_instance_url = f"http://{args.server}:8000/instance/?hostname={args.hostname}"
+            add_instance_url = f"http://{args.controller}:8000/instance/?hostname={args.hostname}"
             requests.post(add_instance_url)
 
-            add_policy_url = f"http://{args.server}:8000/policy/"
+            add_policy_url = f"http://{args.controller}:8000/policy/"
             policy_data = {
                 "hostname": args.hostname,
                 "tool": args.tool,

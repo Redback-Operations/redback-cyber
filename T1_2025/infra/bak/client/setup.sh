@@ -3,6 +3,8 @@
 CONTROLLER="0.0.0.0"
 PORT="8000"
 
+apt update && apt install -y rsync jq
+
 # policy=$(curl -s "http://$CONTROLLER:$PORT/instance/$(hostname)/policy/")
 policy=$(curl -s "http://$CONTROLLER:$PORT/instance/codey-mac.local/policy/")
 

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  controller:
+    image: ubuntu:20.04
+    container_name: bak-controller
+    command: /bin/bash -c "apt-get update && apt-get install -y rsync openssh-server && tail -f /dev/null"
+    networks:
+      - backend
+
+  ubuntu_instance:
+    image: ubuntu:20.04
+    container_name: bak-client
+    command: /bin/bash -c "apt-get update && apt-get install -y rsync openssh-client && tail -f /dev/null"
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
