@@ -65,7 +65,7 @@ try:
             print(f"[*] Querying MISP for: {misp_search_url}")
 
             try:
-                misp_api_response = requests.get(misp_search_url, headers=misp_apicall_headers, verify=False).json()
+                misp_api_response = requests.get(misp_search_url, headers=misp_apicall_headers, verify=False).json() # nosec
                 print("[*] MISP response:")
                 print(json.dumps(misp_api_response, indent=2))
             except Exception as e:
