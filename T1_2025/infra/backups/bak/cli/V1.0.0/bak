@@ -1,0 +1,57 @@
+#!/bin/bash
+
+VERSION="2.0"
+
+source ./utils.sh
+source ./register.sh
+#source ./update.sh
+#source ./version.sh
+#source ./rollback.sh
+
+case "$1" in
+    -h|--help)
+    usage
+    exit 0
+    ;;
+
+    -v|--version)
+    echo "$VERSION"
+    ;;
+
+    -*)
+    err "Unkown flag: $1"
+    ;;
+esac
+
+# If no global flags are used $1 will be a command
+command=$1
+
+# Moves command positions back so its like they're "fresh" for
+# subcommands. Before this it was using the command register
+# as the first argument passed to register. Please see here for
+# a good overview of shift
+# medium.com/@wujido20/handling-flags-in-bash-scripts-4b06b4d0ed04
+shift
+
+case "$command" in 
+    register)
+        register "$@"
+        ;;
+
+    update)
+        update "$@"
+        ;;
+
+    version)
+        version "$@"
+        ;;
+
+    rollback)
+        rollback "$@"
+        ;;
+
+    *)
+        err "Unknown command: $command"
+        ;;
+esac
+
