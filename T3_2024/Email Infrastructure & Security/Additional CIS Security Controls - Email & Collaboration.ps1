@@ -20,7 +20,7 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 Import-Module ExchangeOnlineManagement
 
 # Use an account with 'Global Administrator' or 'Exchange Administrator' permissions.
-Connect-ExchangeOnline -UserPrincipalName adm-redbackops@redbackops.com
+Connect-ExchangeOnline
 
 # Enable advanced Exchange Online features for the organization.
 # This step is necessary if the organization is in a "dehydrated" state, which prevents advanced customization (e.g., custom policies or rules).
@@ -244,12 +244,18 @@ New-MalwareFilterPolicy @Policy -FileTypes $L2Extensions
 # Create the rule for all accepted domains 
 $Rule = @{ Name = 
     $Policy.Name 
-    Enabled = $false 
+    Enabled = $true
     MalwareFilterPolicy = $Policy.Name 
     RecipientDomainIs = (Get-AcceptedDomain).Name 
     Priority = 0 
 }
 New-MalwareFilterRule @Rule
+
+# Validate - Confirm the Policy Was Created
+Get-MalwareFilterPolicy -Identity "Redback_CIS_L2AttachmentPolicy"
+
+# Validate - Confirm the Rule Was Created and Applied
+Get-MalwareFilterRule -Identity "Redback_CIS_L2AttachmentPolicy" | Format-List Name,Enabled,MalwareFilterPolicy,RecipientDomainIs
 
 # Validate - Evaluate each Malware policy. If one exist with more than 120 extensionsthen the script will output a report showing a list of missing extensions along with other parameters.
 $L2Extensions = @(
