@@ -154,4 +154,4 @@ def setup():
 
 if __name__ == '__main__':
     setup()
-    app.run(debug=True, port=8080)
+    app.run(port=8080)

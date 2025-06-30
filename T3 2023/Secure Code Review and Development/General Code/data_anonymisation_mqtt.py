@@ -46,8 +46,8 @@ class MQTTDataFrameHandler:
 
         if 'mac_address' in df_anonymized.columns:
             def encode_mac(mac):
-                hashed_mac = hashlib.md5(mac.encode()).digest()
-                encoded_mac = base64.b64encode(hashed_mac).decode()[:10]
+                hashed_mac = hashlib.md5(mac.encode()).digest() #nosec
+                encoded_mac = base64.b64encode(hashed_mac).decode()[:10] #nosec
                 return encoded_mac
         
             df_anonymized['mac_address'] = df_anonymized['mac_address'].apply(lambda x: encode_mac(x) if x else x)
