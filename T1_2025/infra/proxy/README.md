@@ -1,0 +1,1 @@
+All nginx config is already on the VM at /codey/infra-team/proxy. Additional work with ModSecurity was done by Robin Spoerl. He is a senior in the blue team in T2 2025 and may be continuing work on this project.

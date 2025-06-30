@@ -1,0 +1,307 @@
+# -----------------------------------------------------------------
+# File:     openapi_bak_controller.yml
+# Author:   Codey Funston [cfeng44@github.com]
+# Project:  Cyber Security > Infrastructure > Backups and Recovery
+# Brief:    OpenAPI specification for bak Controller API.
+# version:  1.0.0
+# -----------------------------------------------------------------
+
+openapi: 3.0.0
+
+info:
+  title: bak Controller API
+  description: API for managing the backups of containers and databases.
+  version: 1.0.0
+
+tags:
+  - name: Register
+    description: Initial registering of resources to the controller.
+  - name: Policy 
+    description: Updating and removing policies for resources. 
+  - name: Version
+    description: Rollback functionality.
+
+paths:
+  # Register
+
+  /api/register/container:
+    post:
+      tags:
+        - Register
+      summary: Register a container to the controller with an initial backup policy.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Container"
+      responses:
+        "201":
+          description: Container registered successfully.
+        "400":
+          description: Bad request.
+
+  /api/policy/container/{id}:
+      put:
+        tags:
+          - Policy
+        summary: Update a container policy.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Policy"
+        responses:
+          "204":
+            description: Container policy updated successfully.
+          "400":
+            description: Bad request.
+ 
+  /api/register/db:
+    post:
+      tags:
+        - Register
+      summary: Register a database to the controller with an initial backup policy.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Database"
+      responses:
+        "201":
+          description: Database registered successfully.
+        "400":
+          description: Bad request.
+
+  # Policy
+
+  /api/policy/db/{id}:
+      put:
+        tags:
+          - Policy
+        summary: Update a database policy.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Policy"
+        responses:
+          "204":
+            description: Database policy updated successfully.
+          "400":
+            description: Bad request.
+
+  /api/register/app:
+    post:
+      tags:
+        - Register
+      summary: Register a non-container app to the controller with an initial backup policy.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/App"
+      responses:
+        "201":
+          description: App registered successfully.
+        "400":
+          description: Bad request.
+  
+  /api/policy/app/{id}:
+      put:
+        tags:
+          - Policy
+        summary: Update an app policy.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Policy"
+        responses:
+          "204":
+            description: App policy updated successfully.
+          "400":
+            description: Bad request.
+
+  # Version
+
+  /api/version/container/{container-id}:
+    get:
+      tags:
+        - Version
+      summary: See version history from available container backups.
+      responses:
+        "200":
+          description: List of backups.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Backup"
+
+  /api/version/container/{container-id}/rollback/{backup-id}:
+    put:
+      tags: 
+        - Version
+      summary: Rollback to the specified previous version.
+      responses:
+          "204":
+            description: Container successfully returned to prior state.
+          "400":
+            description: Bad request.
+
+  /api/version/db/{db-id}:
+    get:
+      tags:
+        - Version
+      summary: See version history from available database backups.
+      responses:
+        "200":
+          description: List of backups.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Backup"
+                  
+  /api/version/db/{db-id}/rollback/{backup-id}:
+    put:
+      tags: 
+        - Version
+      summary: Rollback to the specified previous version.
+      responses:
+          "204":
+            description: Database successfully returned to prior state.
+          "400":
+            description: Bad request.
+
+  /api/version/app/{app-id}:
+    get:
+      tags:
+        - Version
+      summary: See version history from available app backups.
+      responses:
+        "200":
+          description: List of backups.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Backup"
+                  
+  /api/version/app/{app-id}/rollback/{backup-id}:
+    put:
+      tags: 
+        - Version
+      summary: Rollback to the specified previous version.
+      responses:
+          "204":
+            description: App successfully returned to prior state.
+          "400":
+            description: Bad request.
+
+components:
+  schemas:
+    Container:
+      type: object
+      required:
+        - container-id
+      properties:
+        container-id:
+          type: string
+          example: a617680ff00e
+        container-name:
+          type: string
+          example: mongo-db-infra-team
+        image:
+          type: string
+          example: ubuntu:latest
+        policy:
+          $ref: "#/components/schemas/Policy"
+
+    Database:
+      type: object
+      required:
+        - db-id
+      properties:
+        db-id:
+          type: string
+          example: a617680ff00e
+        type:
+          type: string
+          example: Postgres
+        port:
+          type: integer
+          example: 5432
+        user:
+          type: string
+          example: admin
+        password:
+          type: string
+          example: Secur3Password123!
+
+    App:
+      type: object
+      required:
+        - app-id
+      properties:
+        app-id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: iac-scanner
+        data-location:
+          type: string
+          example: /var/lib/iac-scanner
+        config-location:
+          type: string
+          example: /etc/iac-scanner
+        database-id:
+          type: string 
+          example: a617680ff00e 
+        runtime:
+          type: string
+          example: Dotnet 8.0
+
+    Policy:
+      type: object
+      required:
+        - policy-id
+      properties:
+        policy-id:
+          type: integer
+          example: 1
+        tool:
+          type: string
+          example: rsync
+        copies:
+          type: integer
+          example: 3
+        frequency:
+          type: string
+          example: "weekly"
+    
+    Backup:
+      type: object
+      required:
+        - backup-id
+      properties:
+        backup-id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Database with new table link.
+        date:
+          type: string
+          format: date
+          example: "2024-12-03"
