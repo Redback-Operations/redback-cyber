@@ -1,0 +1,3 @@
+# This file lists all dependencies needed to run the scanner.
+# To install the requirements:
+#   pip install -r requirements.txt
