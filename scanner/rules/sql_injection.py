@@ -10,17 +10,29 @@
 import re
 
 def check(code_lines, add_vulnerability):
-    sqli_patterns = [
-        r'(?i)cursor\.execute\([^,]+["\'].*?(SELECT|INSERT|DELETE|UPDATE).*?["\']',
-        r'(?i)execute\([^,]+["\'].*?(SELECT|INSERT|DELETE|UPDATE).*?["\']',
-        r'(?i)"\s*\+\s*[\w\[]+.*\+\s*"'
-    ]
+    assigned_queries = {}
+
     for i, line in enumerate(code_lines):
-        for pattern in sqli_patterns:
-            if re.search(pattern, line):
+        if re.search(r"=\s*['\"]\s*(SELECT|INSERT|UPDATE|DELETE)", line, re.IGNORECASE) and '+' in line:
+            var_match = re.match(r"\s*(\w+)\s*=", line)
+            if var_match:
+                var_name = var_match.group(1)
+                assigned_queries[var_name] = i + 1  
+
                 add_vulnerability(
                     "A01: Injection",
-                    f"Potential SQL injection: {line.strip()}",
+                    f"SQL query created via string concatenation: {line.strip()}",
+                    i + 1,
+                    "HIGH",
+                    "MEDIUM"
+                )
+
+        # Detect execution of those suspicious queries
+        for var_name in assigned_queries:
+            if f"execute({var_name})" in line:
+                add_vulnerability(
+                    "A01: Injection",
+                    f"Suspicious query passed to execute(): {line.strip()}",
                     i + 1,
                     "HIGH",
                     "HIGH"

@@ -5,7 +5,8 @@
 
 
 import argparse
-from scanner.core import VulnerabilityScanner
+from core import VulnerabilityScanner
+
 
 def main():
     parser = argparse.ArgumentParser(description="OWASP PR Vulnerability Scanner")

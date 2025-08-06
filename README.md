@@ -45,6 +45,15 @@ A09: Security Logging and Monitoring Failures (e.g. no logging in sensitive flow
 
 A10: Server-Side Request Forgery (SSRF)
 
+## Running the Script 
+### 1. Navigate to your project root
+cd path/to/owasp-scanner
+
+### 2. Set PYTHONPATH so Python recognizes `scanner/` as a package
+set PYTHONPATH=.
+
+### 3. Run the script with the file to scan as an argument
+python scanner/main.py tests/test_positive.py
 
 ## 👤 Author
 Developed by Liana Perry (2025)
