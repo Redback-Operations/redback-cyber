@@ -6,12 +6,14 @@
 # - Prints a simple report
 
 import os
-from scanner.rules import sql_injection, broken_access_control, security_misconfiguration
+from scanner.rules import sql_injection, broken_access_control, security_misconfig, sensitive_data_exposure, auth_failures
 
 RULE_MODULES = [
     sql_injection,
     broken_access_control,
-    security_misconfiguration,
+    security_misconfig,
+    sensitive_data_exposure,
+    auth_failures,
 ]
 
 class VulnerabilityScanner:
@@ -38,9 +40,11 @@ class VulnerabilityScanner:
         return True
 
     def run_checks(self):
-        for rule in RULE_MODULES:
-            # each rule exposes: check(code_lines, add_vulnerability)
-            rule.check(self.code_lines, self.add_vulnerability)
+        sql_injection.check(self.code_lines, self.add_vulnerability)
+        broken_access_control.check(self.code_lines, self.add_vulnerability)
+        security_misconfig.check(self.code_lines, self.add_vulnerability)
+        sensitive_data_exposure.check(self.code_lines, self.add_vulnerability)
+        auth_failures.check(self.code_lines, self.add_vulnerability)
 
     def run(self):
         if not self.parse_file():

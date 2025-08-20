@@ -2,6 +2,8 @@
 
 import os
 import sqlite3
+import hashlib
+import requests
 from flask import Flask
 # Assume a real auth decorator exists in the project. The scanner only checks for its presence.
 def login_required(fn):  # placeholder for scanning context
@@ -24,3 +26,11 @@ query = "SELECT * FROM users WHERE username = ?"
 conn = sqlite3.connect("example.db")
 cursor = conn.cursor()
 cursor.execute(query, (username,))
+
+# --- Secure cryptography usage ---
+# Using a strong hashing algorithm (sha256) instead of md5/sha1
+hashed_password = hashlib.sha256(username.encode()).hexdigest()
+
+# --- Secure HTTP request (TLS verification enabled) ---
+resp = requests.get("https://example.com", verify=True)
+print(resp.status_code)
