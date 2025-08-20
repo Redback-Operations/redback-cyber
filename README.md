@@ -1,49 +1,62 @@
 # OWASP PR Scanner
 
-This tool is designed to scan Python files for security vulnerabilities based on the OWASP Top 10.
+This tool scans Python files for security vulnerabilities based on the **OWASP Top 10**.  
+It is designed for lightweight static analysis of pull requests, helping developers catch common issues early.
 
 ---
 
 ## ✅ Current Functionality
 
-The scanner detects potential vulnerabilities using static analysis (regex and basic logic). Currently implemented:
+The scanner detects potential vulnerabilities using static analysis (regex + simple logic).  
+Implemented rules:
 
 - **A01: Injection**
   - Detects unparameterized SQL queries
   - Flags SQL built with string concatenation or f-strings
 
-- **Clean vs Vulnerable Detection**
-  - Example `test_positive.py` will trigger an alert for SQL injection
-  - Example `test_negative.py` is safe and produces no alerts
+- **A02: Broken Access Control**
+  - Detects Flask routes without authentication decorators
+
+- **A03: Sensitive Data Exposure (Cryptographic Failures)**
+  - Detects weak hashing algorithms (e.g., MD5, SHA1)
+  - Flags hardcoded sensitive values (secrets, passwords, API keys)
+  - Warns about unsafe patterns like environment variable fallbacks if misused
+
+- **A05: Security Misconfiguration**
+  - Detects `debug=True` in Flask apps
+  - Flags permissive host settings (e.g., `ALLOWED_HOSTS = ['*']`)
+  - Insecure cookie/CSRF flags
+  - Hardcoded Flask secrets
+
+- **A07: Identification and Authentication Failures**
+  - Detects default credentials (`admin`, `password`, etc.)
+  - Flags routes like `/login` without authentication checks
+  - Warns about disabled TLS verification in requests (`verify=False`)
 
 ---
 
-## 🚧 Planned Features (OWASP Top 10 Coverage)
-This scanner will be extended to cover the full OWASP Top 10.
+## 📂 Test Cases
 
-Currently implemented:
+- **`test_positive.py`**  
+  Contains vulnerable code that should trigger A01 (SQL Injection).
 
-✅ A01: Injection (e.g. SQL injection detection using regex)
+- **`test_positive_all.py`**  
+  Triggers multiple rules (A01, A02, A03, A05, A07) in one file.
 
-Planned:
+- **`test_negative.py`**  
+  Safe code sample — should pass with **no findings** (used for regression testing).
 
-A02: Cryptographic Failures (e.g. weak hashing, insecure SSL use)
+---
 
-A03: Injection – more types (e.g. XSS, Command Injection)
+## 🚧 Planned Features (Remaining OWASP Top 10)
 
-A04: Insecure Design (e.g. missing access controls)
+- **A04: Insecure Design** (missing access control design patterns)  
+- **A06: Vulnerable and Outdated Components** (dependency scanning)  
+- **A08: Software and Data Integrity Failures** (e.g., unsafe deserialization)  
+- **A09: Security Logging and Monitoring Failures** (e.g., missing audit logging)  
+- **A10: Server-Side Request Forgery (SSRF)**  
 
-A05: Security Misconfiguration (e.g. debug mode, missing headers)
-
-A06: Vulnerable and Outdated Components (dependency scanning)
-
-A07: Identification and Authentication Failures (e.g. missing auth checks)
-
-A08: Software and Data Integrity Failures (e.g. unsafe deserialization)
-
-A09: Security Logging and Monitoring Failures (e.g. no logging in sensitive flows)
-
-A10: Server-Side Request Forgery (SSRF)
+---
 
 ## Running the Script 
 ### 1. Navigate to your project root
