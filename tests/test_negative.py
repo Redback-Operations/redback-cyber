@@ -28,9 +28,7 @@ cursor = conn.cursor()
 cursor.execute(query, (username,))
 
 # --- Secure cryptography usage ---
-# Using a strong hashing algorithm (sha256) instead of md5/sha1
 hashed_password = hashlib.sha256(username.encode()).hexdigest()
 
-# --- Secure HTTP request (TLS verification enabled) ---
 resp = requests.get("https://example.com", verify=True)
 print(resp.status_code)
