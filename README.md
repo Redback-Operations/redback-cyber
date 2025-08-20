@@ -38,9 +38,6 @@ Implemented rules:
 ## 📂 Test Cases
 
 - **`test_positive.py`**  
-  Contains vulnerable code that should trigger A01 (SQL Injection).
-
-- **`test_positive_all.py`**  
   Triggers multiple rules (A01, A02, A03, A05, A07) in one file.
 
 - **`test_negative.py`**  
