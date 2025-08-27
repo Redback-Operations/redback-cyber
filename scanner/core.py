@@ -6,7 +6,15 @@
 # - Prints a simple report
 
 import os
-from scanner.rules import sql_injection, broken_access_control, security_misconfig, sensitive_data_exposure, auth_failures
+from scanner.rules import (
+    sql_injection,
+    broken_access_control,
+    security_misconfig,          
+    sensitive_data_exposure,
+    auth_failures,
+    insecure_design,             
+    vulnerable_components,       
+)
 
 RULE_MODULES = [
     sql_injection,
@@ -14,6 +22,8 @@ RULE_MODULES = [
     security_misconfig,
     sensitive_data_exposure,
     auth_failures,
+    insecure_design,             
+    vulnerable_components,       
 ]
 
 class VulnerabilityScanner:
@@ -40,11 +50,8 @@ class VulnerabilityScanner:
         return True
 
     def run_checks(self):
-        sql_injection.check(self.code_lines, self.add_vulnerability)
-        broken_access_control.check(self.code_lines, self.add_vulnerability)
-        security_misconfig.check(self.code_lines, self.add_vulnerability)
-        sensitive_data_exposure.check(self.code_lines, self.add_vulnerability)
-        auth_failures.check(self.code_lines, self.add_vulnerability)
+        for rule in RULE_MODULES:
+            rule.check(self.code_lines, self.add_vulnerability)
 
     def run(self):
         if not self.parse_file():
@@ -56,13 +63,11 @@ class VulnerabilityScanner:
 
         # ---- colour helpers ----
         def supports_truecolor() -> bool:
-            # Most modern terminals set COLORTERM=truecolor or 24bit
             return os.environ.get("COLORTERM", "").lower() in ("truecolor", "24bit")
 
         def rgb(r, g, b) -> str:
             return f"\033[38;2;{r};{g};{b}m"
 
-        # Fallback 8/16-colour palette
         ANSI = {
             "reset": "\033[0m", "bold": "\033[1m",
             "cyan": "\033[96m", "magenta": "\033[95m",
