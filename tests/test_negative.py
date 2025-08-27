@@ -35,6 +35,4 @@ hashed_password = hashlib.sha256(username.encode()).hexdigest()
 resp = requests.get("https://example.com", verify=True)
 print(resp.status_code)
 
-# Notes:
-# - No "TODO insecure" comments (A04) present.
-# - No dependency pins like 'flask==...' or 'django==...' (A06) present.
+
