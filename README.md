@@ -1,57 +1,87 @@
 # OWASP PR Scanner
 
 This tool scans Python files for security vulnerabilities based on the **OWASP Top 10**.  
-It is designed for lightweight static analysis of pull requests, helping developers catch common issues early.
+It is designed for lightweight static analysis of pull requests, helping developers catch common issues early and enforce secure coding practices.
 
 ---
 
 ## ✅ Current Functionality
 
-The scanner detects potential vulnerabilities using static analysis (regex + simple logic).  
+The scanner detects vulnerabilities using static analysis (regex + simple heuristics).  
+It groups results by OWASP Top 10 category and highlights severity with colour-coded output.  
+
 Implemented rules:
 
-- **A01: Injection**
-  - Detects unparameterized SQL queries
-  - Flags SQL built with string concatenation or f-strings
+- **A01: Injection**  
+  - Detects unparameterized SQL queries  
+  - Flags SQL built with string concatenation or f-strings  
 
-- **A02: Broken Access Control**
-  - Detects Flask routes without authentication decorators
+- **A02: Broken Access Control**  
+  - Detects Flask routes without authentication decorators  
 
-- **A03: Sensitive Data Exposure (Cryptographic Failures)**
-  - Detects weak hashing algorithms (e.g., MD5, SHA1)
-  - Flags hardcoded sensitive values (secrets, passwords, API keys)
-  - Warns about unsafe patterns like environment variable fallbacks if misused
+- **A03: Sensitive Data Exposure (Cryptographic Failures)**  
+  - Detects weak hashing algorithms (MD5, SHA1)  
+  - Flags hardcoded secrets, API keys, and default passwords  
+  - Warns about unsafe fallback values  
 
-- **A05: Security Misconfiguration**
-  - Detects `debug=True` in Flask apps
-  - Flags permissive host settings (e.g., `ALLOWED_HOSTS = ['*']`)
-  - Insecure cookie/CSRF flags
-  - Hardcoded Flask secrets
+- **A04: Insecure Design**  
+  - Flags insecure “TODO” markers, temporary overrides, or auth bypass notes  
 
-- **A07: Identification and Authentication Failures**
-  - Detects default credentials (`admin`, `password`, etc.)
-  - Flags routes like `/login` without authentication checks
-  - Warns about disabled TLS verification in requests (`verify=False`)
+- **A05: Security Misconfiguration**  
+  - Detects `debug=True` in Flask apps  
+  - Flags permissive host settings (`ALLOWED_HOSTS = ['*']`)  
+  - Insecure cookie/CSRF flags  
+  - Hardcoded Flask secrets  
+
+- **A06: Vulnerable and Outdated Components**  
+  - Detects dependency pins like `flask==0.12` or `django==1.11`  
+  - Helps identify outdated or risky components  
+
+- **A07: Identification and Authentication Failures**  
+  - Detects default credentials (`admin`, `password`)  
+  - Flags login routes without auth checks  
+  - Warns about disabled TLS verification (`verify=False`)  
+
+- **A08: Software and Data Integrity Failures**  
+  - Detects dangerous use of `eval()`  
+  - Warns about unsafe deserialization (`pickle.load`)  
+  - Flags subprocess calls with `shell=True`  
+
+- **A09: Security Logging and Monitoring Failures**  
+  - Detects print statements in auth flows  
+  - Flags bare `except:` blocks with no logging  
+  - Warns when secrets are printed to stdout  
+
+- **A10: Server-Side Request Forgery (SSRF)**  
+  - Detects unvalidated user input passed into `requests.get/post`  
 
 ---
 
 ## 📂 Test Cases
 
 - **`test_positive.py`**  
-  Triggers multiple rules (A01, A02, A03, A05, A07) in one file.
+  A deliberately vulnerable file that triggers all implemented OWASP rules (A01–A10).
 
 - **`test_negative.py`**  
-  Safe code sample — should pass with **no findings** (used for regression testing).
+  A safe baseline file with secure practices — should pass with **no findings**.  
+  Used for regression testing and validation.
 
 ---
 
-## 🚧 Planned Features (Remaining OWASP Top 10)
+## 🎨 Output Example
 
-- **A04: Insecure Design** (missing access control design patterns)  
-- **A06: Vulnerable and Outdated Components** (dependency scanning)  
-- **A08: Software and Data Integrity Failures** (e.g., unsafe deserialization)  
-- **A09: Security Logging and Monitoring Failures** (e.g., missing audit logging)  
-- **A10: Server-Side Request Forgery (SSRF)**  
+- Findings are grouped by OWASP category (A01–A10)  
+- Severity levels are **colour-coded**:  
+  - 🔴 High  
+  - 🟠 Medium  
+  - 🟢 Low  
+
+Example:
+=== A01: Injection (2 findings) ===
+Summary: High: 2
+
+• Line 60 | Severity HIGH | Confidence MEDIUM
+→ SQL query created via string concatenation: ...
 
 ---
 
