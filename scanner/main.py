@@ -5,7 +5,7 @@
 
 
 import argparse
-from core import VulnerabilityScanner
+from scanner.core import VulnerabilityScanner
 
 
 def main():

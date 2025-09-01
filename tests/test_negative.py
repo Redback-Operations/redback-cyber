@@ -7,7 +7,7 @@ import requests
 from flask import Flask
 
 # Assume a real auth decorator exists in the project. The scanner only checks for its presence.
-def login_required(fn):  # placeholder for scanning context
+def login_required(fn):  
     return fn
 
 # --- Secure Flask setup ---
@@ -36,3 +36,8 @@ resp = requests.get("https://example.com", verify=True)
 print(resp.status_code)
 
 
+# --- Safe YAML load ---
+data = yaml.safe_load("key: value")
+
+# --- Safe subprocess usage (no shell=True) ---
+subprocess.run(["echo", "hello"], check=True)

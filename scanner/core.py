@@ -1,31 +1,39 @@
 # Responsibilities:
 # - Reads target file, stores code lines
 # - Manages vulnerability list
-# - Runs all rule checks
+# - Runs all rule checks (auto-discovers rules in scanner/rules)
 # - Provides add_vulnerability callback
-# - Prints a simple report
+# - Prints a grouped, colourised report
 
 import os
-from scanner.rules import (
-    sql_injection,
-    broken_access_control,
-    security_misconfig,          
-    sensitive_data_exposure,
-    auth_failures,
-    insecure_design,             
-    vulnerable_components,       
-)
+import importlib
+import pkgutil
+import scanner.rules as rules_pkg
 
-RULE_MODULES = [
-    sql_injection,
-    broken_access_control,
-    security_misconfig,
-    sensitive_data_exposure,
-    auth_failures,
-    insecure_design,             
-    vulnerable_components,       
-]
 
+# -------- Rule auto-discovery --------
+def _load_rule_modules():
+    modules = []
+    for _, modname, _ in pkgutil.iter_modules(rules_pkg.__path__):
+        if modname.startswith("_"):
+            continue  # skip __init__, _template, etc.
+        mod = importlib.import_module(f"{rules_pkg.__name__}.{modname}")
+        if hasattr(mod, "check"):
+            modules.append(mod)
+
+    # Stable order: by CATEGORY "A01: ..." if provided, else by module name
+    def key(m):
+        cat = getattr(m, "CATEGORY", "")
+        head = cat.split(":", 1)[0].strip() if cat else ""
+        return (0, int(head[1:])) if head.startswith("A") and head[1:].isdigit() else (1, m.__name__)
+
+    return sorted(modules, key=key)
+
+
+RULE_MODULES = _load_rule_modules()
+
+
+# -------- Scanner --------
 class VulnerabilityScanner:
     def __init__(self, file_path):
         self.file_path = file_path
@@ -33,13 +41,15 @@ class VulnerabilityScanner:
         self.vulnerabilities = []
 
     def add_vulnerability(self, category, description, line, severity, confidence):
-        self.vulnerabilities.append({
-            "category": category,
-            "description": description,
-            "line": line,
-            "severity": severity,
-            "confidence": confidence,
-        })
+        self.vulnerabilities.append(
+            {
+                "category": category,
+                "description": description,
+                "line": line,
+                "severity": severity,
+                "confidence": confidence,
+            }
+        )
 
     def parse_file(self):
         if not os.path.exists(self.file_path):
@@ -51,6 +61,7 @@ class VulnerabilityScanner:
 
     def run_checks(self):
         for rule in RULE_MODULES:
+            # each rule exposes: check(code_lines, add_vulnerability)
             rule.check(self.code_lines, self.add_vulnerability)
 
     def run(self):
@@ -59,8 +70,6 @@ class VulnerabilityScanner:
         self.run_checks()
 
     def report(self):
-        import os
-
         # ---- colour helpers ----
         def supports_truecolor() -> bool:
             return os.environ.get("COLORTERM", "").lower() in ("truecolor", "24bit")
@@ -69,31 +78,31 @@ class VulnerabilityScanner:
             return f"\033[38;2;{r};{g};{b}m"
 
         ANSI = {
-            "reset": "\033[0m", "bold": "\033[1m",
-            "cyan": "\033[96m", "magenta": "\033[95m",
-            "yellow": "\033[93m", "red": "\033[91m",
-            "green": "\033[92m", "blue": "\033[94m",
+            "reset": "\033[0m",
+            "bold": "\033[1m",
+            "cyan": "\033[96m",
+            "magenta": "\033[95m",
+            "yellow": "\033[93m",
+            "red": "\033[91m",
+            "green": "\033[92m",
+            "blue": "\033[94m",
         }
 
         TRUECOLOR = supports_truecolor()
 
         # Severity colours (true-color -> fallback)
-        CRIT = (rgb(220, 20, 60) if TRUECOLOR else ANSI["red"] + ANSI["bold"])    # crimson
-        HIGH = (rgb(255, 0, 0)   if TRUECOLOR else ANSI["red"])                   # red
-        MED  = (rgb(255, 165, 0) if TRUECOLOR else ANSI["yellow"])                # orange-ish
-        LOW  = (rgb(0, 200, 0)   if TRUECOLOR else ANSI["green"])                 # green
+        CRIT = (rgb(220, 20, 60) if TRUECOLOR else ANSI["red"] + ANSI["bold"])  # crimson
+        HIGH = (rgb(255, 0, 0) if TRUECOLOR else ANSI["red"])                   # red
+        MED = (rgb(255, 165, 0) if TRUECOLOR else ANSI["yellow"])               # orange-ish
+        LOW = (rgb(0, 200, 0) if TRUECOLOR else ANSI["green"])                  # green
 
-        RESET = ANSI["reset"]; BOLD = ANSI["bold"]
-        HDR   = (rgb(180, 130, 255) if TRUECOLOR else ANSI["magenta"])            # section header
-        TITLE = (rgb(120, 220, 200) if TRUECOLOR else ANSI["cyan"])               # title
-        SUM   = (rgb(255, 215, 0)   if TRUECOLOR else ANSI["yellow"])             # summary label
+        RESET = ANSI["reset"]
+        BOLD = ANSI["bold"]
+        HDR = (rgb(180, 130, 255) if TRUECOLOR else ANSI["magenta"])            # section header
+        TITLE = (rgb(120, 220, 200) if TRUECOLOR else ANSI["cyan"])             # title
+        SUM = (rgb(255, 215, 0) if TRUECOLOR else ANSI["yellow"])               # summary label
 
-        sev_color = {
-            "CRITICAL": CRIT,
-            "HIGH": HIGH,
-            "MEDIUM": MED,
-            "LOW": LOW,
-        }
+        sev_color = {"CRITICAL": CRIT, "HIGH": HIGH, "MEDIUM": MED, "LOW": LOW}
 
         print(f"\n{BOLD}{TITLE}Scan Results for {self.file_path}:{RESET}")
 
@@ -108,7 +117,6 @@ class VulnerabilityScanner:
             groups.setdefault(v["category"], []).append(v)
 
         def cat_key(cat: str):
-            # Sort A01..A10 first, then alphabetically
             head = cat.split(":", 1)[0].strip()
             return (0, int(head[1:])) if head.startswith("A") and head[1:].isdigit() else (1, cat.lower())
 
@@ -120,9 +128,8 @@ class VulnerabilityScanner:
                 sev_counts[v["severity"]] = sev_counts.get(v["severity"], 0) + 1
 
             total = len(items)
-            print(f"\n{BOLD}{HDR}=== {cat} ({total} finding{'s' if total!=1 else ''}) ==={RESET}")
+            print(f"\n{BOLD}{HDR}=== {cat} ({total} finding{'s' if total != 1 else ''}) ==={RESET}")
 
-            # coloured summary chips
             chips = []
             for k in ["CRITICAL", "HIGH", "MEDIUM", "LOW"]:
                 n = sev_counts.get(k, 0)
@@ -131,12 +138,9 @@ class VulnerabilityScanner:
             if chips:
                 print(f"{SUM}Summary:{RESET} " + ", ".join(chips))
 
-            # entries
             for v in items:
                 sc = sev_color.get(v["severity"], ANSI["blue"])
-                print(
-                    f"\n  {BOLD}• Line {v['line']} |{RESET} "
-                    f"Severity {sc}{v['severity']}{RESET} | "
-                    f"Confidence {v['confidence']}"
-                )
+                print(f"\n  {BOLD}• Line {v['line']} |{RESET} "
+                      f"Severity {sc}{v['severity']}{RESET} | "
+                      f"Confidence {v['confidence']}")
                 print(f"    → {v['description']}")
