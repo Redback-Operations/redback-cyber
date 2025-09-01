@@ -1,5 +1,6 @@
-# OWASP A04: Insecure Design
-# Heuristics: comments or lines that indicate insecure-by-design choices.
+# A04:2021 – Insecure Design
+# Flags insecure “TODO” markers, temporary overrides, or auth bypass notes  
+
 
 import re
 

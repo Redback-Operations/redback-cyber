@@ -1,4 +1,7 @@
-# Rule: A03 Sensitive Data Exposure (Cryptographic Failures)
+# A02:2021 – Cryptographic Failures
+#  Detects weak hashing algorithms (MD5, SHA1)  
+# Flags hardcoded secrets, API keys, and default passwords  
+# Warns about unsafe fallback values  
 import re
 
 def check(code_lines, add_vulnerability):

@@ -1,4 +1,4 @@
-# OWASP A08: Software and Data Integrity Failures
+# A08:2021 – Software and Data Integrity Failure
 # Flags: eval/exec, unsafe deserialization (pickle), unsafe YAML load, and shell=True
 
 import re

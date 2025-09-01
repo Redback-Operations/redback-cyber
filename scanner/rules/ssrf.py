@@ -1,4 +1,4 @@
-# OWASP A10: Server-Side Request Forgery (SSRF)
+# A10:2021 – Server-Side Request Forgery (SSRF)
 # Heuristic data-flow: user input -> variable -> requests.*(var)
 
 import re

@@ -1,4 +1,7 @@
-# Rule: A07 Identification and Authentication Failures
+# A07:2021 – Identification and Authentication Failures
+# Detects default credentials (`admin`, `password`)  
+# Flags login routes without auth checks   
+# Warns about disabled TLS verification (`verify=False`) 
 import re
 
 def check(code_lines, add_vulnerability):

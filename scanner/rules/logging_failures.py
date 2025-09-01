@@ -1,4 +1,4 @@
-# OWASP A09: Security Logging and Monitoring Failures
+# A09:2021 – Security Logging and Monitoring Failures
 # Flags: printing secrets, bare except with print, and print in login/auth paths
 
 import re

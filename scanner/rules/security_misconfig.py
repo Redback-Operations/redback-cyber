@@ -1,4 +1,4 @@
-# This module implements a check for OWASP A05: Security Misconfiguration.
+# A05:2021 – Security Misconfiguration
 #
 # It flags risky configuration patterns commonly seen in Python, JS, and YAML:
 # 1) Debug modes enabled (Django DEBUG=True, Flask app.run(debug=True)).

@@ -1,4 +1,4 @@
-# This module implements a check for OWASP A02: Broken Access Control.
+# A01:2021 – Broken Access Control
 #
 # It looks for common patterns that suggest missing or weak authorization checks:
 # 1) Flask routes without an auth/role decorator (e.g., @login_required, @jwt_required).

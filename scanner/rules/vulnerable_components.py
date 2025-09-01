@@ -1,4 +1,4 @@
-# OWASP A06: Vulnerable and Outdated Components
+# A06:2021 – Vulnerable and Outdated Components
 # Placeholder rule: looks for requirements with outdated versions.
 
 import re

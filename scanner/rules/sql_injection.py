@@ -1,4 +1,4 @@
-# This module implements a check for OWASP A01: Injection vulnerabilities.
+# A03:2021 – Injection*
 
 # Specifically, it searches for suspicious SQL query patterns in Python code,
 # such as unparameterized queries or string concatenation in `execute()` calls.

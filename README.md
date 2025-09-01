@@ -12,50 +12,51 @@ It groups results by OWASP Top 10 category and highlights severity with colour-c
 
 Implemented rules:
 
-- **A01: Injection**  
-  - Detects unparameterized SQL queries  
-  - Flags SQL built with string concatenation or f-strings  
-
-- **A02: Broken Access Control**  
+- **A01:2021 – Broken Access Control**  
   - Detects Flask routes without authentication decorators  
 
-- **A03: Sensitive Data Exposure (Cryptographic Failures)**  
+- **A02:2021 – Cryptographic Failures**  
   - Detects weak hashing algorithms (MD5, SHA1)  
   - Flags hardcoded secrets, API keys, and default passwords  
   - Warns about unsafe fallback values  
 
-- **A04: Insecure Design**  
+- **A03:2021 – Injection**  
+  - Detects unparameterized SQL queries  
+  - Flags SQL built with string concatenation or f-strings  
+
+- **A04:2021 – Insecure Design**  
   - Flags insecure “TODO” markers, temporary overrides, or auth bypass notes  
 
-- **A05: Security Misconfiguration**  
+- **A05:2021 – Security Misconfiguration**  
   - Detects `debug=True` in Flask apps  
   - Flags permissive host settings (`ALLOWED_HOSTS = ['*']`)  
   - Insecure cookie/CSRF flags  
   - Hardcoded Flask secrets  
 
-- **A06: Vulnerable and Outdated Components**  
+- **A06:2021 – Vulnerable and Outdated Components**  
   - Detects dependency pins like `flask==0.12` or `django==1.11`  
   - Helps identify outdated or risky components  
 
-- **A07: Identification and Authentication Failures**  
+- **A07:2021 – Identification and Authentication Failures**  
   - Detects default credentials (`admin`, `password`)  
   - Flags login routes without auth checks  
   - Warns about disabled TLS verification (`verify=False`)  
 
-- **A08: Software and Data Integrity Failures**  
+- **A08:2021 – Software and Data Integrity Failures**  
   - Detects dangerous use of `eval()`  
   - Warns about unsafe deserialization (`pickle.load`)  
   - Flags subprocess calls with `shell=True`  
 
-- **A09: Security Logging and Monitoring Failures**  
+- **A09:2021 – Security Logging and Monitoring Failures**  
   - Detects print statements in auth flows  
   - Flags bare `except:` blocks with no logging  
   - Warns when secrets are printed to stdout  
 
-- **A10: Server-Side Request Forgery (SSRF)**  
+- **A10:2021 – Server-Side Request Forgery (SSRF)**  
   - Detects unvalidated user input passed into `requests.get/post`  
 
 ---
+
 
 ## 📂 Test Cases
 
