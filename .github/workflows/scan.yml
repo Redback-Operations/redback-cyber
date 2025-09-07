@@ -44,16 +44,16 @@ jobs:
           echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
           echo "$CHANGED_FILES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-      - name: Run OWASP scanner on changed files
-        run: |
-          if [ -z "${CHANGED_FILES}" ]; then
-            echo "Nothing to scan."
-            exit 0
-          fi
-          EXIT=0
-          while IFS= read -r file; do
-            [ -z "$file" ] && continue
-            echo "Scanning: $file"
-            python scanner/main.py --file "$file" || EXIT=1
-          done <<< "${CHANGED_FILES}"
-          exit $EXIT
+          - name: Run OWASP scanner
+            run: |
+              if [ -z "${CHANGED_FILES}" ]; then
+                echo "Nothing to scan."
+                exit 0
+              fi
+              EXIT=0
+              while IFS= read -r file; do
+                [ -z "$file" ] && continue
+                echo "Scanning: $file"
+                python -m scanner.main --file "$file" || EXIT=1
+              done <<< "${CHANGED_FILES}"
+              exit $EXIT
