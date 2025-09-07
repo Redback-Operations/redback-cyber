@@ -16,10 +16,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Install deps
         run: |
           python -m pip install -U pip
@@ -28,8 +30,9 @@ jobs:
           elif [ -f requirements.txt ]; then
             pip install -r requirements.txt
           fi
+
       - name: Determine changed files for this PR
-        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
         run: |
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
@@ -39,21 +42,23 @@ jobs:
             CHANGED_FILES=$(echo "$CHANGED_FILES" | grep -E '^(src/|backend/|scanner/)' || true)
           fi
           if [ -z "$CHANGED_FILES" ]; then
-            CHANGED_FILES="$(git ls-files src backend 2>/dev/null || true)"
+            CHANGED_FILES="$(git ls-files src backend scanner 2>/dev/null || true)"
           fi
-          echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
-          echo "$CHANGED_FILES" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          - name: Run OWASP scanner
-            run: |
-              if [ -z "${CHANGED_FILES}" ]; then
-                echo "Nothing to scan."
-                exit 0
-              fi
-              EXIT=0
-              while IFS= read -r file; do
-                [ -z "$file" ] && continue
-                echo "Scanning: $file"
-                python -m scanner.main --file "$file" || EXIT=1
-              done <<< "${CHANGED_FILES}"
-              exit $EXIT
+          echo "CHANGED_FILES<<EOF" >> "$GITHUB_ENV"
+          echo "$CHANGED_FILES" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Run OWASP scanner on changed files
+        shell: bash
+        run: |
+          if [ -z "${CHANGED_FILES}" ]; then
+            echo "Nothing to scan."
+            exit 0
+          fi
+          EXIT=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            echo "Scanning: $file"
+            python -m scanner.main --file "$file" || EXIT=1
+          done <<< "${CHANGED_FILES}"
+          exit $EXIT
