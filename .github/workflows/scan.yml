@@ -1,0 +1,59 @@
+name: OWASP PR Scanner
+
+on:
+  pull_request:
+    paths:
+      - 'scanner/**'
+      - 'src/**'
+      - 'backend/**'
+      - '.github/workflows/**'
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          if [ -f scanner/requirements.txt ]; then
+            pip install -r scanner/requirements.txt
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+      - name: Determine changed files for this PR
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" \
+            | grep -E '\.(js|jsx|ts|tsx|py|java|go|rb|php|html|css|md)$' || true)
+          if [ -n "$CHANGED_FILES" ]; then
+            CHANGED_FILES=$(echo "$CHANGED_FILES" | grep -E '^(src/|backend/|scanner/)' || true)
+          fi
+          if [ -z "$CHANGED_FILES" ]; then
+            CHANGED_FILES="$(git ls-files src backend 2>/dev/null || true)"
+          fi
+          echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
+          echo "$CHANGED_FILES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - name: Run OWASP scanner on changed files
+        run: |
+          if [ -z "${CHANGED_FILES}" ]; then
+            echo "Nothing to scan."
+            exit 0
+          fi
+          EXIT=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            echo "Scanning: $file"
+            python scanner/main.py --file "$file" || EXIT=1
+          done <<< "${CHANGED_FILES}"
+          exit $EXIT
