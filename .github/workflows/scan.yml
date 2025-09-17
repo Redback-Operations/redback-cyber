@@ -1,0 +1,82 @@
+name: OWASP PR Scanner
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'backend/**'
+      - 'app/**'
+      - 'services/**'
+      - '.github/workflows/**'
+      - 'scanner/**'
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          if [ -f scanner/requirements.txt ]; then
+            pip install -r scanner/requirements.txt
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Determine changed files for this PR
+        id: diff
+        shell: bash
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          RAW=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)
+
+          APP_CHANGED=$(echo "$RAW" \
+            | grep -E '\.(js|jsx|ts|tsx|py|java|go|rb|php|html|css|md)$' \
+            | grep -E '^(src/|backend/|app/|services/)' || true)
+
+          SCANNER_ONLY=$(echo "$RAW" | grep -E '^scanner/' || true)
+
+          if [ -z "$APP_CHANGED" ] && [ -n "$SCANNER_ONLY" ]; then
+            echo "only_scanner_changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [ -z "$APP_CHANGED" ]; then
+            APP_CHANGED="$(git ls-files src backend app services 2>/dev/null || true)"
+          fi
+
+          echo "CHANGED_FILES<<EOF" >> "$GITHUB_ENV"
+          echo "$APP_CHANGED" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Skip when only scanner/** changed
+        if: steps.diff.outputs.only_scanner_changes == 'true'
+        run: echo "Only scanner/** changed; skipping scan."
+
+      - name: Run OWASP scanner on changed files
+        if: steps.diff.outputs.only_scanner_changes != 'true'
+        shell: bash
+        run: |
+          if [ -z "${CHANGED_FILES}" ]; then
+            echo "Nothing to scan."
+            exit 0
+          fi
+          EXIT=0
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            echo "Scanning: $file"
+            python -m scanner.main "$file" || EXIT=1
+          done <<< "${CHANGED_FILES}"
+          exit $EXIT
