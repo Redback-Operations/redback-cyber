@@ -1,0 +1,51 @@
+services:
+  nginx:
+#    image: nginx
+    image: owasp/modsecurity-crs:4.16-nginx-202506301206
+    container_name: nginx.modsecurity
+    restart: always
+
+    ports:
+      # Temporarily using high ports to avoid conflicts:
+      # - 444: Wazuh
+      # - 80: Streamlit
+      # Replace with standard ports once Nginx is tested.
+      - "980:80"
+      - "443:443"
+    environment:
+      MODSEC_RULE_ENGINE: "DetectionOnly"
+      MODSEC_AUDIT_LOG: /dev/stdout
+      MODSEC_AUDIT_LOG_FORMAT: "Native"
+      MODSEC_AUDIT_LOG_PARTS: "ACH"
+      MODSEC_REQ_BODY_ACCESS: "On"
+    logging:
+      driver: journald
+      options:
+        tag: "modsecurity"
+    # Requires access to multiple networks to route requests.
+    networks:
+      - coredwinfrastructure_dw_network
+      - mongo_default
+      - monitoring_infra_team_net
+      - playground-backend_bugbox
+      - single-node_default
+      - sumit_default
+
+    volumes:
+      # Main configuration file that includes infra and blue team configurations.
+      - /home/codey/infra-team/proxy/nginx.conf:/etc/nginx/templates/nginx.conf.template:ro
+      - /home/codey/infra-team/proxy/ssl:/etc/nginx/conf:ro
+
+networks:
+  coredwinfrastructure_dw_network:
+    external: true
+  mongo_default:
+    external: true
+  monitoring_infra_team_net:
+    external: true
+  playground-backend_bugbox:
+    external: true
+  single-node_default:
+    external: true
+  sumit_default:
+    external: true
