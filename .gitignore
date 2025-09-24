@@ -1,1 +1,6 @@
-"scanner/venv/" 
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+scanner/venv/
