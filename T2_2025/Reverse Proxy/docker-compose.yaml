@@ -50,5 +50,3 @@ networks:
   sumit_default:
 
     external: true
-
-    
