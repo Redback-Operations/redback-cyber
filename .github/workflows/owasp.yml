@@ -1,7 +1,7 @@
 name: OWASP PR Scanner
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -35,40 +35,33 @@ jobs:
 
       - name: Determine changed files for this PR
         id: diff
-        shell: bash
         run: |
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
           RAW="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)"
           APP_CHANGED="$(echo "$RAW" \
-            | grep -E '\.(js|jsx|ts|tsx|py|java|go|rb|php|html|css|md)$' \
-            | grep -E '^(src/|backend/|app/|services/)' || true)"
-          SCANNER_ONLY="$(echo "$RAW" | grep -E '^scanner/' || true)"
-          if [ -z "$APP_CHANGED" ] && [ -n "$SCANNER_ONLY" ]; then
-            echo "only_scanner_changes=true" >> $GITHUB_OUTPUT
-          else
-            if [ -z "$APP_CHANGED" ]; then
-              APP_CHANGED="$(git ls-files src backend app services 2>/dev/null || true)"
-            fi
-            echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-            echo "$APP_CHANGED" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            | grep -E '\.(js|jsx|ts|tsx|py|java|go|rb|php|html|css|md|conf|yml|yaml|json)$' \
+            || true)"
+          if [ -z "$APP_CHANGED" ]; then
+            APP_CHANGED="$(git ls-files)"
           fi
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$APP_CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Skip when only scanner/** changed
-        if: steps.diff.outputs.only_scanner_changes == 'true'
-        run: echo "Only scanner/** changed; skipping scan."
-
-      - name: Run OWASP scanner on changed files
-        if: steps.diff.outputs.only_scanner_changes != 'true'
+      - name: Run OWASP scanner
         id: owasp
-        shell: bash
         run: |
           CHANGED_FILES="${{ steps.diff.outputs.changed_files }}"
           if [ -z "$CHANGED_FILES" ]; then
             echo "Nothing to scan." | tee owasp-results.txt
             echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
             exit 0
+          fi
+
+          if [ ! -d "scanner" ]; then
+            echo "::error::Scanner module not found (scanner/)."
+            exit 1
           fi
 
           : > owasp-results.txt
@@ -87,38 +80,27 @@ jobs:
           else
             echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
           fi
-
-          exit $EXIT || true
+          exit 0
 
       - name: Create PR comment body
-        id: comment
-        if: always() && steps.diff.outputs.only_scanner_changes != 'true'
-        shell: bash
+        if: always()
         run: |
-          if [ -f owasp-results.txt ]; then
-            RESULTS="$(cat owasp-results.txt)"
-          else
-            RESULTS="No scanner output available."
-          fi
-
+          RESULTS=$(cat owasp-results.txt || echo "No results.")
           if [ "${{ steps.owasp.outputs.vulnerabilities_found }}" == "true" ]; then
             echo 'comment_body<<EOF' >> $GITHUB_ENV
             echo '## 🔒 OWASP Scanner Results' >> $GITHUB_ENV
             echo '' >> $GITHUB_ENV
-            echo 'Vulnerabilities were detected in the changed files:' >> $GITHUB_ENV
-            echo '' >> $GITHUB_ENV
+            echo 'Vulnerabilities were detected:' >> $GITHUB_ENV
             echo '```' >> $GITHUB_ENV
             echo "$RESULTS" >> $GITHUB_ENV
             echo '```' >> $GITHUB_ENV
-            echo '' >> $GITHUB_ENV
-            echo '⛔ Please address these findings before merging.' >> $GITHUB_ENV
+            echo '⛔ Please address these before merging.' >> $GITHUB_ENV
             echo 'EOF' >> $GITHUB_ENV
           else
             echo 'comment_body<<EOF' >> $GITHUB_ENV
             echo '## 🔒 OWASP Scanner Results' >> $GITHUB_ENV
             echo '' >> $GITHUB_ENV
-            echo 'No vulnerabilities detected in the changed files.' >> $GITHUB_ENV
-            echo '' >> $GITHUB_ENV
+            echo 'No vulnerabilities detected.' >> $GITHUB_ENV
             echo '```' >> $GITHUB_ENV
             echo "$RESULTS" >> $GITHUB_ENV
             echo '```' >> $GITHUB_ENV
@@ -128,22 +110,19 @@ jobs:
 
       - name: Comment PR
         uses: peter-evans/create-or-update-comment@v4
-        if: always() && steps.diff.outputs.only_scanner_changes != 'true'
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ env.comment_body }}
 
       - name: Upload scan artifact
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: owasp-scan-results
-          path: |
-            owasp-results.txt
+          path: owasp-results.txt
           retention-days: 5
 
       - name: Fail if vulnerabilities found
         if: steps.owasp.outputs.vulnerabilities_found == 'true'
         run: |
-          echo "::error::OWASP scanner reported vulnerabilities. Failing the job."
+          echo "::error::OWASP scanner reported vulnerabilities."
           exit 1
