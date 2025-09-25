@@ -4,10 +4,10 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened]
 
-
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 jobs:
   scan:
@@ -81,7 +81,6 @@ jobs:
           else
             echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
           fi
-          exit 0
 
       - name: Create PR comment body
         if: always()
@@ -125,5 +124,10 @@ jobs:
       - name: Fail if vulnerabilities found
         if: steps.owasp.outputs.vulnerabilities_found == 'true'
         run: |
-          echo "::error::OWASP scanner reported vulnerabilities."
+          echo "::error::❌ Vulnerabilities detected! Merge blocked."
           exit 1
+
+      - name: Safe to merge
+        if: steps.owasp.outputs.vulnerabilities_found == 'false'
+        run: |
+          echo "✅ No vulnerabilities found. Safe to merge."
