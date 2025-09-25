@@ -1,0 +1,67 @@
+name: OWASP PR Scanner
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR HEAD
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          if [ -f scanner/requirements.txt ]; then
+            pip install -r scanner/requirements.txt
+          fi
+
+      - name: Run OWASP Scanner
+        id: owasp
+        run: |
+          python scanner/main.py > scan_output.txt
+          if grep -q "Severity" scan_output.txt; then
+            echo "vulnerabilities_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "vulnerabilities_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post PR Comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: scan_output.txt
+
+      - name: Upload scan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-scan-results
+          path: scan_output.txt
+          retention-days: 5
+
+      - name: Fail if vulnerabilities found
+        if: steps.owasp.outputs.vulnerabilities_found == 'true'
+        run: |
+          echo "::error::❌ Vulnerabilities detected! Merge blocked."
+          exit 1
+
+      - name: Safe to merge
+        if: steps.owasp.outputs.vulnerabilities_found == 'false'
+        run: |
+          echo "✅ No vulnerabilities found. Safe to merge."
