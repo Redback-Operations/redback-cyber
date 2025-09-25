@@ -1,21 +1,33 @@
-# Entry point for the OWASP PR Scanner CLI tool.
-# This script parses the command-line arguments (i.e., the file path to scan),
-# initializes the VulnerabilityScanner with the specified file, runs all rule checks,
-# and prints a formatted vulnerability report to the console.
+import sys
+import os
+from scanner.core import VulnerabilityScanner
 
 
-import argparse
-from .core import VulnerabilityScanner
+def main(file_paths):
+    any_vulns = False
 
+    for file_path in file_paths:
+        scanner = VulnerabilityScanner(file_path)
+        if not scanner.parse_file():
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                print(f"\n### ⚠️ File `{file_path}` not found")
+            else:
+                print(f"\n[!] File {file_path} does not exist.")
+            continue
 
-def main():
-    parser = argparse.ArgumentParser(description="OWASP PR Vulnerability Scanner")
-    parser.add_argument("path", help="Path to Python file to scan")
-    args = parser.parse_args()
+        scanner.run_checks()
+        scanner.report()
 
-    scanner = VulnerabilityScanner(args.path)
-    scanner.run()
-    scanner.report()
+        if scanner.vulnerabilities:
+            any_vulns = True
+
+    if any_vulns:
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) < 2:
+        print("Usage: python scanner/main.py <file1> <file2> ...")
+        sys.exit(1)
+
+    main(sys.argv[1:])
